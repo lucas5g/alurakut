@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Box } from '../src/components/Box'
 import { MainGrid } from '../src/components/MainGrid'
 import { AlurakutMenu, AlurakutProfileSidebarMenuDefault, OrkutNostalgicIconSet } from '../src/lib/AlurakutCommons'
@@ -22,6 +22,29 @@ function ProfileSidebar({ githubUser }) {
   )
 }
 
+function ProfileRelationsBox({ title, items }) {
+  return (
+    <ProfileRelationsBoxWrapper>
+      <h2 className="smallTitle">
+        {title} ({items.length})
+      </h2>
+      <ul>
+        {items.map((follower, index) => {
+          if (index < 6) {
+            return (
+              <li key={index}>
+                <a href={`https://github.com/${follower.login}.png`}>
+                  <img src={follower.avatar_url} alt="" />
+                </a>
+              </li>
+            )
+          }
+        })}
+      </ul>
+    </ProfileRelationsBoxWrapper>
+  )
+}
+
 export default function Home() {
   const user = 'lucas5g'
   const [communities, setCommunities] = useState([{
@@ -39,6 +62,16 @@ export default function Home() {
     'felipefialho'
   ]
 
+  const [followers, setFollowers] = useState([])
+
+  useEffect(() => {
+    fetch('https://api.github.com/users/peas/followers')
+      .then(res => res.json())
+      .then(res => {
+        console.log(res)
+        setFollowers(res)
+      })
+  }, [])
   return (
     <>
       <AlurakutMenu />
@@ -91,6 +124,7 @@ export default function Home() {
           </Box>
         </div>
         <div className="profileRealationsArea" style={{ gridArea: 'profileRelationsArea' }}>
+          <ProfileRelationsBox title="Seguidores" items={followers} />
           <ProfileRelationsBoxWrapper>
             <h2 className="smallTitle">
               Comunidades ({communities.length})
