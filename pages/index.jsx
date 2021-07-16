@@ -1,4 +1,9 @@
 import React, { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
+import nookies from 'nookies'
+import jwt from 'jsonwebtoken'
+import { signIn, signOut, useSession } from 'next-auth/client'
+
 import { Box } from '../src/components/Box'
 import { MainGrid } from '../src/components/MainGrid'
 import { AlurakutMenu, AlurakutProfileSidebarMenuDefault, OrkutNostalgicIconSet } from '../src/lib/AlurakutCommons'
@@ -45,8 +50,8 @@ function ProfileRelationsBox({ title, items }) {
   )
 }
 
-export default function Home() {
-  const user = 'lucas5g'
+export default function Home(props) {
+  const user = props.githubUser
   const [communities, setCommunities] = useState([])
 
   const peopleFavorite = [
@@ -59,6 +64,18 @@ export default function Home() {
   ]
 
   const [followers, setFollowers] = useState([])
+  const [session, loading] = useSession()
+  const router = useRouter()
+
+  useEffect(() => {
+    if(session === null){
+      console.log("im here")
+      console.log('session', session)
+
+      router.push('/login')
+    }
+  }, [])
+
 
   useEffect(() => {
     //get
@@ -70,15 +87,16 @@ export default function Home() {
       })
 
 
-      //API GraphQl
-      fetch('https://graphql.datocms.com/', {
-        method: 'POST',
-        headers: {
-          'Authorization': '628322cb83895ebe99bfd65b352218',
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({"query":`query {
+    //API GraphQl
+    fetch('https://graphql.datocms.com/', {
+      method: 'POST',
+      headers: {
+        'Authorization': '628322cb83895ebe99bfd65b352218',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        "query": `query {
           allCommunities {
             id
             title
@@ -86,11 +104,11 @@ export default function Home() {
             creatorSlug
           }
         }`})
-      })
+    })
       .then((response) => response.json())
       .then((respostaCompleta) => {
-      console.log({respostaCompleta})
-        const comunidadesVindasDoDato = respostaCompleta.data.allCommunities 
+        console.log({ respostaCompleta })
+        const comunidadesVindasDoDato = respostaCompleta.data.allCommunities
         setCommunities(comunidadesVindasDoDato)
       })
 
@@ -127,18 +145,18 @@ export default function Home() {
 
                 fetch('/api/comunidades', {
                   method: 'post',
-                  headers:{
+                  headers: {
                     'Content-Type': 'application/json'
                   },
                   body: JSON.stringify(community)
                 })
-                .then( async(response) => {
-                  const dados = await response.json()
+                  .then(async (response) => {
+                    const dados = await response.json()
 
-                  const comunidade = dados.registroCriado
-                  const comunidadesAtualizadas = [...communities, comunidade]
-                  setCommunities(comunidadesAtualizadas)
-                })
+                    const comunidade = dados.registroCriado
+                    const comunidadesAtualizadas = [...communities, comunidade]
+                    setCommunities(comunidadesAtualizadas)
+                  })
 
               }}>
 
@@ -201,4 +219,40 @@ export default function Home() {
 
     </>
   )
+}
+
+export async function getServerSideProps(context) {
+  // console.log('Cookies', nookies.get(context).USER_TOKEN)
+  // const cookies = nookies.get(context)
+  // const token = cookies.USER_TOKEN
+  // const {githubUser} = jwt.decode(token)
+
+  // const {isAuthenticated } = await fetch('https://alurakut.vercel.app/api/auth', {
+  //   method: 'post',
+  //   headers:{
+  //     Authorization: token
+  //   }
+  // })
+  // .then(res => res.json())
+  // .then(res => {
+  //   console.log(res)
+  // })
+
+  // console.log({isAuthenticated})
+
+  // if(!isAuthenticated){
+  //   return {
+  //     redirect:{
+  //       destination: '/login',
+  //       permanent: false
+  //     }
+  //   }
+  // }
+
+  const githubUser = 'lucas5g'
+  return {
+    props: {
+      githubUser
+    }
+  }
 }

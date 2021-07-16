@@ -1,5 +1,6 @@
 import { createGlobalStyle, ThemeProvider } from 'styled-components'
 import { AlurakutStyles } from '../src/lib/AlurakutCommons'
+import {Provider} from 'next-auth/client'
 
 const GlobalStyle = createGlobalStyle`
   *{
