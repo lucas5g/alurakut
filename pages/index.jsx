@@ -29,7 +29,7 @@ function ProfileRelationsBox({ title, items }) {
         {title} ({items.length})
       </h2>
       <ul>
-        {items.map((follower, index) => {
+        {/* {items.map((follower, index) => {
           if (index < 6) {
             return (
               <li key={index}>
@@ -38,8 +38,8 @@ function ProfileRelationsBox({ title, items }) {
                 </a>
               </li>
             )
-          }
-        })}
+          } */}
+        {/* })} */}
       </ul>
     </ProfileRelationsBoxWrapper>
   )
@@ -47,11 +47,7 @@ function ProfileRelationsBox({ title, items }) {
 
 export default function Home() {
   const user = 'lucas5g'
-  const [communities, setCommunities] = useState([{
-    id: 123123,
-    title: 'Eu odeio acordar cedo',
-    image: 'https://alurakut.vercel.app/capa-comunidade-01.jpg'
-  }])
+  const [communities, setCommunities] = useState([])
 
   const peopleFavorite = [
     'juunegreiros',
@@ -65,12 +61,40 @@ export default function Home() {
   const [followers, setFollowers] = useState([])
 
   useEffect(() => {
+    //get
     fetch('https://api.github.com/users/peas/followers')
       .then(res => res.json())
       .then(res => {
         console.log(res)
         setFollowers(res)
       })
+
+
+      //API GraphQl
+      fetch('https://graphql.datocms.com/', {
+        method: 'POST',
+        headers: {
+          'Authorization': '628322cb83895ebe99bfd65b352218',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({"query":`query {
+          allCommunities {
+            id
+            title
+            imageUrl
+            creatorSlug
+          }
+        }`})
+      })
+      .then((response) => response.json())
+      .then((respostaCompleta) => {
+      console.log({respostaCompleta})
+        const comunidadesVindasDoDato = respostaCompleta.data.allCommunities 
+        setCommunities(comunidadesVindasDoDato)
+      })
+
+
   }, [])
   return (
     <>
@@ -95,11 +119,27 @@ export default function Home() {
 
                 const data = new FormData(event.target)
                 const community = {
-                  id: new Date().toISOString(),
+                  // id: new Date().toISOString(),
                   title: data.get('title'),
-                  image: data.get('image')
+                  imageUrl: data.get('image'),
+                  creatorSlug: user
                 }
-                setCommunities([...communities, community])
+
+                fetch('/api/comunidades', {
+                  method: 'post',
+                  headers:{
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(community)
+                })
+                .then( async(response) => {
+                  const dados = await response.json()
+
+                  const comunidade = dados.registroCriado
+                  const comunidadesAtualizadas = [...communities, comunidade]
+                  setCommunities(comunidadesAtualizadas)
+                })
+
               }}>
 
                 <div>
@@ -133,7 +173,7 @@ export default function Home() {
               {communities.map(community => (
                 <li key={community.id}>
                   <a href={`/users/${community.title}`}>
-                    <img src={community.image} alt={community.title} />
+                    <img src={community.imageUrl} alt={community.title} />
                     <span>{community.title}</span>
                   </a>
                 </li>
